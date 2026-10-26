@@ -1,0 +1,9 @@
+{
+  "wireguardApple": {
+    "repository": "https://github.com/WireGuard/wireguard-apple.git",
+    "revision": "2fec12a6e1f6e3460b6ee483aa00ad29cddadab1",
+    "tag": "1.0.16-27",
+    "license": "MIT"
+  },
+  "swiftTestImage": "swift:6.0.3-jammy"
+}

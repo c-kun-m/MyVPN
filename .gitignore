@@ -1,0 +1,16 @@
+.DS_Store
+.build/
+.build-support/
+.swiftpm/
+DerivedData/
+artifacts/
+Config/Local.xcconfig
+Vendor/
+*.xcuserstate
+xcuserdata/
+*.mobileprovision
+*.p12
+*.key
+*.pcap
+*.pcapng
+__pycache__/

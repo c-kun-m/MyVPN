@@ -1,0 +1,3 @@
+// Copy this file to Local.xcconfig, then register the matching identifiers in Xcode.
+DEVELOPMENT_TEAM = YOUR_TEAM_ID
+NPV_BUNDLE_PREFIX = com.yourorganisation.npv
