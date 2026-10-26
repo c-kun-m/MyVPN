@@ -54,6 +54,7 @@ def generate():
             if name == "Debug":
                 build["SWIFT_ACTIVE_COMPILATION_CONDITIONS"] = "$(inherited) DEBUG"
                 build["ENABLE_TESTABILITY"] = "YES"
+                build["ONLY_ACTIVE_ARCH"] = "YES"
             entries.append(add(label+":"+name, "XCBuildConfiguration", name=name, baseConfigurationReference=config_ref, buildSettings=build))
         return add(label+":list", "XCConfigurationList", buildConfigurations=entries, defaultConfigurationIsVisible="0", defaultConfigurationName="Release")
     project_configs = configs("project-configs", {"SDKROOT":"iphoneos", "SUPPORTED_PLATFORMS":"iphoneos iphonesimulator", "ALWAYS_SEARCH_USER_PATHS":"NO"})

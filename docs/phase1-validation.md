@@ -30,6 +30,32 @@ bash scripts/check_macos.sh
 Go bridge 首次构建会在 DerivedData 中复制安装的 GOROOT，再应用上游连续时钟修改；未知符号布局会拒绝构建。不得为通过构建而跳过此检查。
 结构检查在 Mac 使用系统 `plutil`，无需额外 Python 包。`bootstrap.py` 只允许固定上游清单的 Swift tools 5.3 → 5.5 修正和 `WireGuardKitC.h` 中的 `sys/types.h` 引用；其他依赖改动会阻止构建。当前 SDK 的实际编译结果和限制见 `test-report.md`。
 
+### SSH 环境中的平台匹配错误
+
+如果 Xcode 报告 `iOS ... is not installed`，先核对实际安装版本和 SDK 对应关系：
+
+```sh
+xcrun --sdk iphoneos --show-sdk-build-version
+xcrun simctl list runtimes
+xcrun simctl runtime match list
+xcodebuild -project NPV.xcodeproj -scheme NPV -showdestinations
+```
+
+2026-10-26 的实测环境是 Xcode 26.3、iOS 26.2 SDK `23C57`。原先只有候选发布版运行包 `23C52`，且匹配表没有为这个 SDK 选到已安装运行包。以下操作安装正式包并修正映射后，`Any iOS Device` 恢复可用，未签名 iOS 构建通过：
+
+```sh
+xcodebuild -downloadPlatform iOS -buildVersion 23C54 -architectureVariant arm64
+xcrun simctl runtime match set iphoneos26.2 23C54 --sdkBuild 23C57
+```
+
+这些构建号仅对应上述环境。升级 Xcode 后应重新核对版本；需要恢复该 SDK 的默认匹配时执行：
+
+```sh
+xcrun simctl runtime match set iphoneos26.2 --default --sdkBuild 23C57
+```
+
+Go 命令行下载依赖可能没有继承 macOS 的系统代理。使用代理的环境应给当前构建命令设置实际的 `HTTPS_PROXY`／`HTTP_PROXY` 地址；依赖仍通过固定 `go.sum` 和 Go 默认校验机制验证。
+
 ## 2. 设备身份与网关参数
 
 App 内生成身份，复制显示的设备公钥到网关的 peer 配置。示意（不是可以直接执行的完整网关配置）：
