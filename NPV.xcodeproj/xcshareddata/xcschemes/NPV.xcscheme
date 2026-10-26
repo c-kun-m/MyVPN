@@ -8,6 +8,9 @@
       <BuildActionEntry buildForTesting="YES" buildForRunning="NO" buildForProfiling="NO" buildForArchiving="NO" buildForAnalyzing="YES">
         <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="A1939B1E91C428E1159A4DF5" BuildableName="NPVAppleTests.xctest" BlueprintName="NPVAppleTests" ReferencedContainer="container:NPV.xcodeproj" />
       </BuildActionEntry>
+      <BuildActionEntry buildForTesting="YES" buildForRunning="NO" buildForProfiling="NO" buildForArchiving="NO" buildForAnalyzing="YES">
+        <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="7B8DB27385E6C484C16747AB" BuildableName="NPVUITests.xctest" BlueprintName="NPVUITests" ReferencedContainer="container:NPV.xcodeproj" />
+      </BuildActionEntry>
     </BuildActionEntries>
   </BuildAction>
   <TestAction buildConfiguration="Debug" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier="Xcode.IDEFoundation.Launcher.LLDB" shouldUseLaunchSchemeArgsEnv="NO" codeCoverageEnabled="YES">
@@ -17,6 +20,9 @@
     <Testables>
       <TestableReference skipped="NO">
         <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="A1939B1E91C428E1159A4DF5" BuildableName="NPVAppleTests.xctest" BlueprintName="NPVAppleTests" ReferencedContainer="container:NPV.xcodeproj" />
+      </TestableReference>
+      <TestableReference skipped="NO">
+        <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="7B8DB27385E6C484C16747AB" BuildableName="NPVUITests.xctest" BlueprintName="NPVUITests" ReferencedContainer="container:NPV.xcodeproj" />
       </TestableReference>
     </Testables>
   </TestAction>

@@ -1,7 +1,7 @@
 # NPV · iOS 安全隧道实验客户端
 
 第一阶段实现：原生 iOS App + Packet Tunnel 扩展 + WireGuardKit。
-目前已完成源码、Xcode 工程和未签名 iOS 构建，主 App、隧道扩展与 Go bridge 已编译链接成功。Mac／iOS 模拟器上共 60 项自动化测试通过。**尚未完成真实 iPhone 签名、与远端服务器联调及泄漏测试；不能当作已验收或生产可用的 VPN。**
+已完成主 App、隧道扩展与 Go bridge 的未签名 iOS Debug / Release 构建，并提供可直接操作的 Debug 模拟器开发模式。共 84 项自动化测试通过，实际结果见 [测试记录](docs/test-report.md)。**尚未完成真实 iPhone 签名、与远端服务器联调及泄漏测试；不能当作已验收或生产可用的 VPN。**
 
 ## 已实现
 
@@ -12,7 +12,9 @@
 - WireGuardKit 接口集成、固定源码依赖及 Go bridge 构建步骤。
 - 有界 IPC，只向 UI 返回收发计数、握手时间和采样时间；不返回原始运行配置。
 - 基础错误日志、启动超时、前台统计；没有“VPN 图标出现即已安全”的提示。
-- 39 项核心自动化测试、2 项已在 iOS 模拟器通过的身份测试、6 项待显式启用的真机网络测试。
+- 连接／配置／诊断三个页面，以及首次配置引导、字段校验与错误恢复。
+- 模拟器正常、超时、保存失败、启动失败、密钥不可读、无握手、恢复等场景；与真机共用连接控制器，实验数据仅保留本次运行。
+- 核心、身份、控制器和界面自动化测试；另有 6 项待显式启用的真机网络测试。
 
 本阶段不包含自动重连策略、分流、多协议、远程订阅、HTTPS 解密和生产安全认证。`includeAllNetworks` 是候选系统策略，具体故障行为仍需按真机矩阵验收。
 
@@ -20,17 +22,32 @@
 
 | 路径 | 内容 |
 | --- | --- |
-| `NPV.xcodeproj` | 主 App、隧道扩展、托管 XCTest 的可打开工程 |
+| `NPV.xcodeproj` | 主 App、隧道扩展、托管 XCTest 和 UI 测试的可打开工程 |
 | `Sources/Core` | 无 Apple SDK 依赖的配置、安全校验、状态和 IPC 模型 |
 | `Sources/AppleShared` | Keychain、App Group、脱敏错误记录 |
-| `Sources/App` | SwiftUI 界面和系统 VPN 控制器 |
+| `Sources/App` | SwiftUI 界面、共用连接控制器、真实／模拟系统适配器 |
 | `Sources/Tunnel` | WireGuard 配置转换、Packet Tunnel Provider |
 | `Tests/CoreTests` | Linux/macOS 上实际运行的核心测试 |
-| `Tests/AppleTests` | 身份向量测试和真机 DNS/TCP/UDP 测试 |
+| `Tests/AppleTests` | 身份、控制器及真机 DNS/TCP/UDP 测试 |
+| `Tests/UITests` | 模拟器首次配置、连接、编辑及异常流程测试 |
 | `lab` | 自有测试网关上的受限 DNS／TCP／UDP fixture |
 | `scripts` | 固定依赖获取、工程生成、检查和测试入口 |
 | `docs/phase1-validation.md` | 真机与网关准备、联调步骤和验收证据 |
 | `docs/test-report.md` | 已执行测试、结果、限制和剩余工作 |
+| `docs/simulator-development.md` | 模拟器运行、场景选择、SSH 验证和实现边界 |
+
+## 先用模拟器开发
+
+在 Mac 的 Xcode 中选择 NPV、Debug 和 iPhone 模拟器，即进入明确标识的模拟模式。在“配置”页面生成实验身份、添加服务器并填入模拟示例，再从“连接”页面操作。“开发场景”用于选择成功或异常结果；退出进程后实验数据清除。
+
+无需开发者签名和测试服务器即可通过 SSH 执行：
+
+```sh
+python3 scripts/bootstrap.py
+bash scripts/check_simulator.sh
+```
+
+该入口运行自动化测试、导出截图，并检查真实 iOS Debug / Release 未签名构建。默认使用已有的 `NPV Validation` 模拟器，其他设备通过 `NPV_SIMULATOR_UDID` 指定。详细步骤见 [模拟器开发说明](docs/simulator-development.md)。模拟后端仅在 Debug 模拟器编译，真实设备不会回退为模拟连接。
 
 ## 在 Mac 上构建
 
@@ -93,7 +110,7 @@ python3 -m unittest discover -s scripts -p 'test_*.py' -v
 bash scripts/check_macos.sh
 ```
 
-原始输出保存在本机 `artifacts/`（忽略提交）。当前工具链的未签名 iOS 编译与两项身份测试已通过；签名、Keychain 跨进程访问和真机网络行为仍须验证。
+原始输出保存在本机 `artifacts/`（忽略提交）。当前工具链的未签名 iOS Debug / Release 编译、身份、控制器与模拟器 UI 测试已通过；签名、Keychain 跨进程访问和真机网络行为仍须验证。
 不要将跳过的真机测试记为通过。
 
 ## 依赖与证据

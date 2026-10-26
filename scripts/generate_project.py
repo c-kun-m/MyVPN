@@ -29,7 +29,7 @@ def generate():
     config_ref = add("base-config", "PBXFileReference", lastKnownFileType="text.xcconfig", path="Config/Base.xcconfig", sourceTree="<group>")
     files = {}
     groups = []
-    for folder in ["Sources/App", "Sources/AppleShared", "Sources/Tunnel", "Tests/AppleTests"]:
+    for folder in ["Sources/App", "Sources/AppleShared", "Sources/Tunnel", "Tests/AppleTests", "Tests/UITests"]:
         children = []
         for path in sorted((ROOT / folder).glob("*.swift")):
             relative = path.relative_to(ROOT).as_posix()
@@ -37,7 +37,7 @@ def generate():
             children.append(files[relative])
         groups.append(add("group:"+folder, "PBXGroup", name=folder, children=children, sourceTree="<group>"))
     products = {}
-    for name, suffix, kind in [("NPV", "app", "wrapper.application"), ("NPVTunnel", "appex", "wrapper.app-extension"), ("NPVAppleTests", "xctest", "wrapper.cfbundle")]:
+    for name, suffix, kind in [("NPV", "app", "wrapper.application"), ("NPVTunnel", "appex", "wrapper.app-extension"), ("NPVAppleTests", "xctest", "wrapper.cfbundle"), ("NPVUITests", "xctest", "wrapper.cfbundle")]:
         products[name] = add("product:"+name, "PBXFileReference", explicitFileType=kind, includeInIndex="0", path=name+"."+suffix, sourceTree="BUILT_PRODUCTS_DIR")
     product_group = add("products", "PBXGroup", name="Products", children=list(products.values()), sourceTree="<group>")
     main_group = add("main", "PBXGroup", children=groups+[config_ref, product_group], sourceTree="<group>")
@@ -63,7 +63,8 @@ def generate():
     for name, folders, package_names, product_type, bundle, info, entitlement in [
         ("NPV", ["Sources/App", "Sources/AppleShared"], ["NPVCore"], "com.apple.product-type.application", "$(NPV_BUNDLE_PREFIX)", "App", "App"),
         ("NPVTunnel", ["Sources/Tunnel", "Sources/AppleShared"], ["NPVCore", "WireGuardKit"], "com.apple.product-type.app-extension", "$(NPV_PROVIDER_BUNDLE_ID)", "Tunnel", "Tunnel"),
-        ("NPVAppleTests", ["Tests/AppleTests"], [], "com.apple.product-type.bundle.unit-test", "$(NPV_BUNDLE_PREFIX).tests", None, None)
+        ("NPVAppleTests", ["Tests/AppleTests"], ["NPVCore"], "com.apple.product-type.bundle.unit-test", "$(NPV_BUNDLE_PREFIX).tests", None, None),
+        ("NPVUITests", ["Tests/UITests"], [], "com.apple.product-type.bundle.ui-testing", "$(NPV_BUNDLE_PREFIX).uitests", None, None)
     ]:
         source_files = [add(name+":build:"+path, "PBXBuildFile", fileRef=ref) for path, ref in files.items() if str(Path(path).parent).replace("\\", "/") in folders]
         source_phase = add(name+":sources", "PBXSourcesBuildPhase", buildActionMask="2147483647", files=source_files, runOnlyForDeploymentPostprocessing="0")
@@ -81,7 +82,7 @@ def generate():
                         name="Build pinned WireGuard Go bridge", shellPath="/bin/bash", shellScript='/bin/bash "$SRCROOT/scripts/build_wireguard.sh"',
                         alwaysOutOfDate="1", runOnlyForDeploymentPostprocessing="0")
             phases.insert(0, phase)
-        if name in ["NPV", "NPVAppleTests"]:
+        if name in ["NPV", "NPVAppleTests", "NPVUITests"]:
             dependency_name = "NPVTunnel" if name == "NPV" else "NPV"
             proxy = add(name+":proxy", "PBXContainerItemProxy", containerPortal=project_id, proxyType="1", remoteGlobalIDString=target_ids[dependency_name], remoteInfo=dependency_name)
             dependencies.append(add(name+":dependency", "PBXTargetDependency", target=target_ids[dependency_name], targetProxy=proxy))
@@ -95,8 +96,10 @@ def generate():
             privacy_build = add(name+":privacy-build", "PBXBuildFile", fileRef=resource)
             phases.append(add(name+":resources", "PBXResourcesBuildPhase", buildActionMask="2147483647", files=[privacy_build], runOnlyForDeploymentPostprocessing="0"))
             objects[main_group]["children"].append(resource)
-        else:
+        elif name == "NPVAppleTests":
             settings.update({"GENERATE_INFOPLIST_FILE":"YES", "TEST_HOST":"$(BUILT_PRODUCTS_DIR)/NPV.app/NPV", "BUNDLE_LOADER":"$(TEST_HOST)"})
+        else:
+            settings.update({"GENERATE_INFOPLIST_FILE":"YES", "TEST_TARGET_NAME":"NPV"})
         if name == "NPVTunnel":
             settings.update({"APPLICATION_EXTENSION_API_ONLY":"YES", "SKIP_INSTALL":"YES", "LIBRARY_SEARCH_PATHS":["$(inherited)", "$(CONFIGURATION_BUILD_DIR)"]})
         add("target:"+name, "PBXNativeTarget", name=name, productName=name, productReference=products[name], productType=product_type,
@@ -122,6 +125,7 @@ def write_plists():
     app = dict(common, CFBundlePackageType="APPL", CFBundleDisplayName="NPV 实验", LSRequiresIPhoneOS=True,
                UILaunchScreen={}, UIApplicationSceneManifest={"UIApplicationSupportsMultipleScenes":False},
                UISupportedInterfaceOrientations=["UIInterfaceOrientationPortrait", "UIInterfaceOrientationLandscapeLeft", "UIInterfaceOrientationLandscapeRight"])
+    app["UISupportedInterfaceOrientations~ipad"] = ["UIInterfaceOrientationPortrait", "UIInterfaceOrientationPortraitUpsideDown", "UIInterfaceOrientationLandscapeLeft", "UIInterfaceOrientationLandscapeRight"]
     extension = dict(common, CFBundlePackageType="XPC!", NSExtension={"NSExtensionPointIdentifier":"com.apple.networkextension.packet-tunnel",
                                                                   "NSExtensionPrincipalClass":"$(PRODUCT_MODULE_NAME).PacketTunnelProvider"})
     entitlements = {"com.apple.developer.networking.networkextension":["packet-tunnel-provider"],
@@ -139,7 +143,7 @@ def write_scheme(project, ids):
     scheme = ET.Element("Scheme", LastUpgradeVersion="1600", version="1.3")
     build = ET.SubElement(scheme, "BuildAction", parallelizeBuildables="YES", buildImplicitDependencies="YES")
     entries = ET.SubElement(build, "BuildActionEntries")
-    for name, ext in [("NPV", ".app"), ("NPVAppleTests", ".xctest")]:
+    for name, ext in [("NPV", ".app"), ("NPVAppleTests", ".xctest"), ("NPVUITests", ".xctest")]:
         entry = ET.SubElement(entries, "BuildActionEntry", buildForTesting="YES", buildForRunning="YES" if name == "NPV" else "NO",
                               buildForProfiling="YES" if name == "NPV" else "NO", buildForArchiving="YES" if name == "NPV" else "NO", buildForAnalyzing="YES")
         reference(entry, name, ext)
@@ -147,8 +151,10 @@ def write_scheme(project, ids):
                          selectedLauncherIdentifier="Xcode.IDEFoundation.Launcher.LLDB", shouldUseLaunchSchemeArgsEnv="NO", codeCoverageEnabled="YES")
     environment = ET.SubElement(test, "EnvironmentVariables")
     ET.SubElement(environment, "EnvironmentVariable", key="NPV_RUN_NETWORK_TESTS", value="1", isEnabled="NO")
-    testable = ET.SubElement(ET.SubElement(test, "Testables"), "TestableReference", skipped="NO")
-    reference(testable, "NPVAppleTests", ".xctest")
+    testables = ET.SubElement(test, "Testables")
+    for name in ["NPVAppleTests", "NPVUITests"]:
+        testable = ET.SubElement(testables, "TestableReference", skipped="NO")
+        reference(testable, name, ".xctest")
     launch = ET.SubElement(scheme, "LaunchAction", buildConfiguration="Debug", selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB",
                            selectedLauncherIdentifier="Xcode.IDEFoundation.Launcher.LLDB", launchStyle="0", useCustomWorkingDirectory="NO", ignoresPersistentStateOnLaunch="NO", debugDocumentVersioning="YES", allowLocationSimulation="YES")
     reference(ET.SubElement(launch, "BuildableProductRunnable", runnableDebuggingMode="0"), "NPV", ".app")

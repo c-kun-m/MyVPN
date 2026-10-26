@@ -31,7 +31,7 @@ def check():
     root = objects[project["rootObject"]]
     assert root["isa"] == "PBXProject"
     targets = {objects[ref]["name"]: objects[ref] for ref in root["targets"]}
-    assert set(targets) == {"NPV", "NPVTunnel", "NPVAppleTests"}
+    assert set(targets) == {"NPV", "NPVTunnel", "NPVAppleTests", "NPVUITests"}
     for obj in objects.values():
         if obj["isa"] == "PBXFileReference" and obj["sourceTree"] == "<group>":
             assert (ROOT / obj["path"]).is_file(), obj["path"]
@@ -58,6 +58,9 @@ def check():
                 assert settings["APPLICATION_EXTENSION_API_ONLY"] == "YES"
                 assert "$(CONFIGURATION_BUILD_DIR)" in settings["LIBRARY_SEARCH_PATHS"]
             if name == "NPVAppleTests": assert settings["TEST_HOST"] == "$(BUILT_PRODUCTS_DIR)/NPV.app/NPV"
+            if name == "NPVUITests":
+                assert settings["TEST_TARGET_NAME"] == "NPV"
+                assert "TEST_HOST" not in settings
         phases = [objects[ref] for ref in target["buildPhases"]]
         if name == "NPVTunnel":
             assert phases[0]["isa"] == "PBXShellScriptBuildPhase"
@@ -67,6 +70,7 @@ def check():
             assert len(target["dependencies"]) == 1
     scheme = ET.parse(ROOT / "NPV.xcodeproj/xcshareddata/xcschemes/NPV.xcscheme")
     for ref in scheme.findall(".//BuildableReference"): assert ref.attrib["BlueprintIdentifier"] in objects
+    assert {r.attrib["BlueprintName"] for r in scheme.findall(".//Testables/TestableReference/BuildableReference")} == {"NPVAppleTests", "NPVUITests"}
     lock = json.loads((ROOT / "scripts/dependencies.json").read_text())
     assert lock["wireguardApple"]["revision"] in (ROOT / "scripts/build_wireguard.sh").read_text()
     for file in (ROOT / "scripts").glob("*.sh"):
