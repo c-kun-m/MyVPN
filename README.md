@@ -1,7 +1,7 @@
 # NPV · iOS 安全隧道实验客户端
 
 第一阶段实现：原生 iOS App + Packet Tunnel 扩展 + WireGuardKit。
-目前已完成源码、Xcode 工程及可在 Linux 运行的核心测试。**尚未在 macOS/iOS SDK 编译，也未完成 iPhone 与远端服务器联调；不能当作已验收或生产可用的 VPN。**
+目前已完成源码、Xcode 工程，核心测试已在 Linux 和 Mac 上执行。Mac 上共 57 项自动化测试通过；iOS 构建尝试被 Xcode 缺少 iOS 26.2 平台组件阻塞。**尚未完成 iOS App 编译、iPhone 与远端服务器联调；不能当作已验收或生产可用的 VPN。**
 
 ## 已实现
 
