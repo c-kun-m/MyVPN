@@ -99,7 +99,7 @@ bash scripts/check_macos.sh
 ## 依赖与证据
 
 WireGuardKit 固定为官方仓库镜像的 `2fec12a6e1f6e3460b6ee483aa00ad29cddadab1`；`scripts/dependencies.json` 是锁定记录。
-`Vendor/` 是可重新获取的忽略目录，`bootstrap.py` 会检查源码提交和本地改动，不覆盖不同版本。唯一允许的兼容修改是将上游 `Package.swift` 的 Swift tools 声明从 5.3 修正为 5.5，以匹配其 macOS 12 / iOS 15 平台 API；其他改动会阻止构建。
+`Vendor/` 是可重新获取的忽略目录，`bootstrap.py` 会检查源码提交和本地改动，不覆盖不同版本。只允许两处兼容修改：将上游 `Package.swift` 的 Swift tools 声明从 5.3 修正为 5.5，以及在 `WireGuardKitC.h` 中显式引用 `sys/types.h`，以适配新版 SDK 的 C 模块类型检查。其他改动会阻止构建。
 源码许可证和工程资料见 `THIRD_PARTY_NOTICES.md`。Xcode 项目由标准库 Python 脚本生成，可重复生成；修改结构后执行 `python3 scripts/generate_project.py`。
 
 正式发布前仍须进行上游依赖更新与漏洞评估、Mac 全量构建、真机矩阵、泄漏测试、独立安全审查以及发布资格核验。

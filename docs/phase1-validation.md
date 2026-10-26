@@ -28,7 +28,7 @@ bash scripts/check_macos.sh
 
 该脚本只做核心测试和未签名 iOS 编译。然后在 Xcode 中选择 NPV scheme 和真实 iPhone，Build/Run，分别核对 App 和扩展签名。
 Go bridge 首次构建会在 DerivedData 中复制安装的 GOROOT，再应用上游连续时钟修改；未知符号布局会拒绝构建。不得为通过构建而跳过此检查。
-结构检查在 Mac 使用系统 `plutil`，无需额外 Python 包。`bootstrap.py` 会对固定上游清单应用唯一允许的 Swift tools 5.3 → 5.5 修正；其他依赖改动会阻止构建。当前 SDK 的实际编译结果和限制见 `test-report.md`。
+结构检查在 Mac 使用系统 `plutil`，无需额外 Python 包。`bootstrap.py` 只允许固定上游清单的 Swift tools 5.3 → 5.5 修正和 `WireGuardKitC.h` 中的 `sys/types.h` 引用；其他依赖改动会阻止构建。当前 SDK 的实际编译结果和限制见 `test-report.md`。
 
 ## 2. 设备身份与网关参数
 
