@@ -1,7 +1,7 @@
 # NPV · iOS 安全隧道实验客户端
 
 第一阶段实现：原生 iOS App + Packet Tunnel 扩展 + WireGuardKit。
-目前已完成源码、Xcode 工程，核心测试已在 Linux 和 Mac 上执行。Mac 上共 57 项自动化测试通过；iOS 构建尝试被 Xcode 缺少 iOS 26.2 平台组件阻塞。**尚未完成 iOS App 编译、iPhone 与远端服务器联调；不能当作已验收或生产可用的 VPN。**
+目前已完成源码、Xcode 工程和未签名 iOS 构建，主 App、隧道扩展与 Go bridge 已编译链接成功。Mac／iOS 模拟器上共 60 项自动化测试通过。**尚未完成真实 iPhone 签名、与远端服务器联调及泄漏测试；不能当作已验收或生产可用的 VPN。**
 
 ## 已实现
 
@@ -12,7 +12,7 @@
 - WireGuardKit 接口集成、固定源码依赖及 Go bridge 构建步骤。
 - 有界 IPC，只向 UI 返回收发计数、握手时间和采样时间；不返回原始运行配置。
 - 基础错误日志、启动超时、前台统计；没有“VPN 图标出现即已安全”的提示。
-- 39 项核心自动化测试、2 项待 Apple 环境执行的身份测试、6 项显式启用的真机网络测试。
+- 39 项核心自动化测试、2 项已在 iOS 模拟器通过的身份测试、6 项待显式启用的真机网络测试。
 
 本阶段不包含自动重连策略、分流、多协议、远程订阅、HTTPS 解密和生产安全认证。`includeAllNetworks` 是候选系统策略，具体故障行为仍需按真机矩阵验收。
 
@@ -93,7 +93,7 @@ python3 -m unittest discover -s scripts -p 'test_*.py' -v
 bash scripts/check_macos.sh
 ```
 
-原始输出保存在本机 `artifacts/`（忽略提交）。iOS 编译、签名、Keychain 和真机网络行为必须另行验证。
+原始输出保存在本机 `artifacts/`（忽略提交）。当前工具链的未签名 iOS 编译与两项身份测试已通过；签名、Keychain 跨进程访问和真机网络行为仍须验证。
 不要将跳过的真机测试记为通过。
 
 ## 依赖与证据
@@ -102,4 +102,4 @@ WireGuardKit 固定为官方仓库镜像的 `2fec12a6e1f6e3460b6ee483aa00ad29cdd
 `Vendor/` 是可重新获取的忽略目录，`bootstrap.py` 会检查源码提交和本地改动，不覆盖不同版本。只允许两处兼容修改：将上游 `Package.swift` 的 Swift tools 声明从 5.3 修正为 5.5，以及在 `WireGuardKitC.h` 中显式引用 `sys/types.h`，以适配新版 SDK 的 C 模块类型检查。其他改动会阻止构建。
 源码许可证和工程资料见 `THIRD_PARTY_NOTICES.md`。Xcode 项目由标准库 Python 脚本生成，可重复生成；修改结构后执行 `python3 scripts/generate_project.py`。
 
-正式发布前仍须进行上游依赖更新与漏洞评估、Mac 全量构建、真机矩阵、泄漏测试、独立安全审查以及发布资格核验。
+正式发布前仍须进行上游依赖更新与漏洞评估、正式签名及发布构建、真机矩阵、泄漏测试、独立安全审查以及发布资格核验。

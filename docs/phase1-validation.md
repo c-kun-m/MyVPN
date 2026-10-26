@@ -81,6 +81,17 @@ AllowedIPs = 10.77.0.2/32, fd77::2/128
 ## 3. 只运行身份测试
 
 在 Xcode Test Navigator 中运行 `IdentityTests` 两项测试：RFC 7748 公钥向量及错误私钥长度。
+
+也可以通过 SSH 在已安装的模拟器上运行。先用 `-showdestinations` 确认实际设备名称；以下名称对应本次创建的测试设备：
+
+```sh
+xcodebuild -project NPV.xcodeproj -scheme NPV \
+  -destination 'platform=iOS Simulator,name=NPV Validation,OS=26.2' \
+  -derivedDataPath DerivedData -parallel-testing-enabled NO \
+  -only-testing:NPVAppleTests/IdentityTests CODE_SIGNING_ALLOWED=NO test
+```
+
+该命令只运行两项身份测试。真实 Keychain 访问组、VPN 授权及网络行为按后续真机步骤验证。
 默认禁用的 `NetworkPathTests` 不应因此被计为通过。
 另外人工检查：退出并重启 App、锁屏后设备公钥保持一致，系统 VPN 配置／App Group 文件及日志中没有私钥。
 重启但尚未首次解锁时 Keychain 不可读属于已定义边界，不应偷偷生成替代身份。
