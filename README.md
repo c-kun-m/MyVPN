@@ -35,7 +35,18 @@
 ## 在 Mac 上构建
 
 需要支持 iOS 18 的 Xcode（16 或以上）、命令行工具、Python 3、Git 和 Go。
+官方 Go 安装器默认安装到 `/usr/local/go`。非交互 SSH 会话可能没有加载它的 PATH；可在当前会话执行 `export PATH="/usr/local/go/bin:$PATH"`。工程的 Go 构建脚本已包含这个路径。
 Go bridge 使用上游构建逻辑，并在私有 GOROOT 副本中应用同等语义的连续时钟修改（旧上游 diff 的上下文已不适配较新 Go）。修改只允许三个经过识别的符号位置，未知源码布局会报错。仍必须验证所选 Go/Xcode 组合；旧版上游的依赖不能直接认定为生产合格，详见依赖说明。
+
+通过 GitHub 同步到 Mac：
+
+```sh
+mkdir -p ~/Developer
+git clone https://github.com/c-kun-m/MyVPN.git ~/Developer/MyVPN
+cd ~/Developer/MyVPN
+```
+
+已有此目录时，在目录中执行 `git pull --ff-only` 更新。只通过 SSH 也可以执行下方的自动化测试及未签名编译；安装到 iPhone 仍需要设备配对和开发签名。
 
 ```sh
 python3 scripts/bootstrap.py
@@ -67,7 +78,7 @@ open NPV.xcodeproj
 ## 本地测试
 
 ```sh
-# 安装项目结构检查器到项目自己的缓存目录
+# Windows/Linux：Python 3.10+，安装检查器到项目缓存；Mac 使用系统 plutil，无需此安装
 python3 -m pip install --target .build-support/python openstep-parser==2.0.3
 python3 scripts/check_project.py
 
@@ -88,7 +99,7 @@ bash scripts/check_macos.sh
 ## 依赖与证据
 
 WireGuardKit 固定为官方仓库镜像的 `2fec12a6e1f6e3460b6ee483aa00ad29cddadab1`；`scripts/dependencies.json` 是锁定记录。
-`Vendor/` 是可重新获取的忽略目录，`bootstrap.py` 会检查源码提交和本地改动，不覆盖不同版本。
+`Vendor/` 是可重新获取的忽略目录，`bootstrap.py` 会检查源码提交和本地改动，不覆盖不同版本。唯一允许的兼容修改是将上游 `Package.swift` 的 Swift tools 声明从 5.3 修正为 5.5，以匹配其 macOS 12 / iOS 15 平台 API；其他改动会阻止构建。
 源码许可证和工程资料见 `THIRD_PARTY_NOTICES.md`。Xcode 项目由标准库 Python 脚本生成，可重复生成；修改结构后执行 `python3 scripts/generate_project.py`。
 
 正式发布前仍须进行上游依赖更新与漏洞评估、Mac 全量构建、真机矩阵、泄漏测试、独立安全审查以及发布资格核验。

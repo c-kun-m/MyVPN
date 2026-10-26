@@ -12,9 +12,10 @@ Go bridge 的 `go.mod` 和 `go.sum` 在上述固定源码中，包含 wireguard-
 其完整许可证应在正式分发前随实际构建依赖清单一起复核和纳入制品。
 此固定提交的 Go 依赖年代较早，**尚未做漏洞扫描及当前 Apple SDK／Go 工具链兼容性认证**；固定提交提高可复现性，不代表没有漏洞或适合生产。
 此项目未修改上游的加密协议和实现，也没有把上游 UI 复制成自己的产品。
+构建时只将上游 `Package.swift` 首行 Swift tools 版本从 5.3 修正为 5.5，以匹配其声明的平台 API。每次构建核对固定提交、完整清单和其他文件改动，不接受任意 vendor 补丁。
 
 ## 测试工具
 
-- openstep-parser 2.0.3：用于独立解析实际 Xcode 工程，BSD 类许可证；仅存在于本机测试缓存，不进入 App。
+- openstep-parser 2.0.3：Windows/Linux 使用的工程解析器，MIT 许可证，需要 Python 3.10+；仅存在于本机测试缓存，不进入 App。Mac 使用系统 `plutil`。
 - Swift 6.0.3 Linux：本次跨平台核心编译测试工具链，下载自 swift.org，并验证 Swift 6.x 官方发布签名。不是 iOS SDK。
 - Python unittest：用于独立 fixture 协议测试。

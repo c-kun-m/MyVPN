@@ -2,24 +2,31 @@
 """Parse the actual PBX project and check cross-target signing/build invariants.
 
 This is structural validation, NOT an Xcode compilation or entitlement approval.
-Install: python -m pip install --target .build-support/python openstep-parser==2.0.3
+macOS uses Apple's plutil. Elsewhere use Python 3.10+ and install:
+python -m pip install --target .build-support/python openstep-parser==2.0.3
 """
 import json
 from pathlib import Path
 import plistlib
+import subprocess
 import sys
 import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / ".build-support/python"))
-try:
-    from openstep_parser import OpenStepDecoder
-except ImportError:
-    raise SystemExit("Install openstep-parser==2.0.3 into .build-support/python; see script docstring.")
 
 def check():
-    with (ROOT / "NPV.xcodeproj/project.pbxproj").open(encoding="utf-8") as handle:
-        project = OpenStepDecoder.ParseFromFile(handle)
+    project_path = ROOT / "NPV.xcodeproj/project.pbxproj"
+    if sys.platform == "darwin":
+        project = json.loads(subprocess.check_output(
+            ["/usr/bin/plutil", "-convert", "json", "-o", "-", str(project_path)]))
+    else:
+        try:
+            from openstep_parser import OpenStepDecoder
+        except ImportError:
+            raise SystemExit("Install openstep-parser==2.0.3 into .build-support/python with Python 3.10+.")
+        with project_path.open(encoding="utf-8") as handle:
+            project = OpenStepDecoder.ParseFromFile(handle)
     objects = project["objects"]
     root = objects[project["rootObject"]]
     assert root["isa"] == "PBXProject"

@@ -9,10 +9,7 @@ if [[ "$(git -C "$vendor" rev-parse HEAD)" != "$expected" ]]; then
     echo 'WireGuard dependency revision mismatch. Run python3 scripts/bootstrap.py.' >&2
     exit 1
 fi
-if [[ -n "$(git -C "$vendor" status --porcelain)" ]]; then
-    echo 'WireGuard dependency has local modifications; refusing to build.' >&2
-    exit 1
-fi
+python3 "$SRCROOT/scripts/bootstrap.py" --verify-only
 command -v go >/dev/null || { echo 'Install a supported Go toolchain on this Mac, then rerun.' >&2; exit 1; }
 go_version="$(go env GOVERSION)"
 if [[ ! "$go_version" =~ ^go1\.[0-9]+\.[0-9]+$ ]]; then
